@@ -77,6 +77,21 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+  case T_PGFLT: ;
+    uint f = rcr2();
+    if (f >KERNBASE-1){
+        cprintf("from trap access > KERNBASE");
+        exit();
+    }
+    f = PGROUNDDOWN(f);
+    if (allocuvm(myproc()->pgdir, f, f + PGSIZE) == 0) {
+        cprintf("allocuvm fail");
+        exit();
+    }
+    myproc()->stack_pages++;
+    cprintf("Increased Stack Size, Number of pages allocated: %d\n", myproc()->stack_pages);
+    break;
+
 
   //PAGEBREAK: 13
   default:
